@@ -24,8 +24,10 @@ IMAGES = {
 }
 
 SOUNDS = {
-
-
+	BGM = love.audio.newSource("shinobimashou.ogg"),
+	LEVEL_CLEAR = love.audio.newSource("omedetou.wav"),
+	GAME_CLEAR = love.audio.newSource("omedetougozaimasu.wav"),
+	FAILURE = love.audio.newSource("zannen.wav")
 }
 
 --y value all entities sit at 
@@ -112,6 +114,9 @@ function love.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
 	love.graphics.setCaption("Saishou")
 	world:init()
+	
+	SOUNDS.BGM:setLooping(true)
+	love.audio.play(SOUNDS.BGM)
 end
 
 
@@ -207,8 +212,11 @@ function player:update(dt)
 	--check collisions with guard views (these count regardless of movement)
 	for _, v in ipairs(world.guards) do
 
-		if distance(self.pos, v.pos) <= v.size  and v:in_front(self.pos) and not self.hidden  then
+		if distance(self.pos, v.pos) <= v.size * 1.2  and v:in_front(self.pos) and not self.hidden  then
+			SOUNDS.FAILURE:play()
+			SOUNDS.FAILURE:rewind()
 			world:restart() --FAILURE
+			
 		end
 	end
 	
@@ -314,9 +322,12 @@ function world:next_level()
 
 	if self.leveli < #LEVELS then
 		self.leveli = self.leveli + 1
+		SOUNDS.LEVEL_CLEAR:play()
+		SOUNDS.LEVEL_CLEAR:rewind()
 		self:restart()
 	else
-		
+		SOUNDS.GAME_CLEAR:play()
+		love.audio.stop(SOUNDS.BGM)
 	end
 end
 
