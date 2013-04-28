@@ -6,7 +6,7 @@ DEFAULT_COLOUR = {150, 150, 150}
 PLAYER_COLOUR = {0, 0, 0}
 ENEMY_COLOUR = {255, 0, 0}
 COVER_COLOUR = {0, 255, 0}
-SCROLL_COLOUR = {255, 248, 231}
+SCROLL_COLOUR = {200, 160, 150}
 
 SCREEN_SIZE = {800, 600}
 
@@ -189,8 +189,11 @@ end
 Cover = {}
 
 function Cover:new(spawn)
-	o = {}
 
+	local o = {
+		pos = spawn,
+		size = 60
+	}
 	setmetatable(o, self)
 	self.__index = self
 
@@ -199,16 +202,18 @@ end
 
 function Cover:draw()
 	love.graphics.setColor(unpack(COVER_COLOUR))
-	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size/2, self.size, self.size) 
+	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
 end
 
 
 Scroll = {}
 
 function Scroll:new(spawn)
-	o = {}
-	o.pos = spawn
-	o.size = 10	
+	local o = {
+		pos = spawn,
+		size = 10
+	}
+
 	setmetatable(o, self)
 	self.__index = self
 
@@ -217,7 +222,7 @@ end
 
 function Scroll:draw()
 	love.graphics.setColor(unpack(SCROLL_COLOUR))
-	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size/2, self.size, self.size) 
+	love.graphics.rectangle("fill", self.pos - self.size, FLOOR - self.size, self.size, self.size) 
 end
 
 world = {}
