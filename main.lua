@@ -3,14 +3,30 @@
 ]]--
 
 
+
+
 COLOURS = {
 	DEFAULT = {150, 150, 150},
 	PLAYER = {0, 0, 0},
-	ENEMY = {255, 0, 0},
+	GUARD = {255, 0, 0},
 	COVER = {0, 255, 0},
 	SCROLL = {200, 160, 150}
 }
 SCREEN_SIZE = {800, 600}
+
+IMAGES = {
+	BG = love.graphics.newImage("bg.png"),
+	NINJA = love.graphics.newImage("ninsmall.png"),
+	GUARD = love.graphics.newImage("tekismall.png"),
+	SCROLL = love.graphics.newImage("scroll.png"),
+	COVER = love.graphics.newImage("tokusmall.png")
+	
+}
+
+SOUNDS = {
+
+
+}
 
 --y value all entities sit at 
 FLOOR = (2 * SCREEN_SIZE[2]) / 3
@@ -108,6 +124,9 @@ end
 
 
 function love.draw()
+	--draw background
+	love.graphics.setColor(255, 255, 255)
+	love.graphics.draw(IMAGES.BG, 0, 0)
 	--draw floor
 	love.graphics.setColor(unpack(COLOURS.DEFAULT))
 	love.graphics.setLine(10, "smooth")
@@ -122,7 +141,7 @@ end
 
 function love.keypressed(key)
 	if key == ' ' then
-		player:toggle_move()
+		player.velocity = 50
 	elseif key == 'escape' then
 		love.event.push("quit")
 	end
@@ -130,7 +149,7 @@ end
 
 function love.keyreleased(key)
 	if key == ' ' then
-		player:toggle_move()
+		player.velocity = 0
 	end
 end
 
@@ -146,8 +165,15 @@ end
 
 
 function player:draw()
-	love.graphics.setColor(unpack(COLOURS.PLAYER))
-	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
+	
+	if self.hidden then
+		love.graphics.setColor(255, 255, 255, 125)
+	else
+		love.graphics.setColor(255, 255, 255, 255)
+	end
+	--love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
+	love.graphics.draw(IMAGES.NINJA, self.pos - self.size/2, FLOOR - self.size, 0, 0.5, 0.5, 0, 0)
+	love.graphics.setColor(255, 255, 255, 255)
 end
 
 
@@ -161,36 +187,43 @@ function player:update(dt)
 	if self.velocity == 0  then
 		--check cover
 		for _, v in ipairs(world.cover) do
-			if distance(self.pos, v.pos) then
+			if distance(self.pos, v.pos) <= v.size then
+				self.hidden = true
 			end
 		end
 		--check scrolls
-		for _, v in ipairs(world.scrolls) do
-			if distance(self.pos, v.pos) then
+		for i, v in ipairs(world.scrolls) do
+			if distance(self.pos, v.pos) <= v.size then
+				table.remove(world.scrolls, i)
+				break
 			end
 
 		end
-
+	else
+		self.hidden = false
 
 	end
 
 	--check collisions with guard views (these count regardless of movement)
 	for _, v in ipairs(world.guards) do
-			if distance(self.pos, v.pos) then
-			end
+
+		if distance(self.pos, v.pos) <= v.size  and v:in_front(self.pos) and not self.hidden  then
+			world:restart() --FAILURE
+		end
 	end
 	
 	self.pos = (self.pos + self.velocity * dt) % SCREEN_SIZE[1]
+	self.hidden = false --
 end
 
 Guard = {}
 
-function Guard:new(spawn, path)
+function Guard:new(spawn, path, dir)
 	--create object
 	local o = {
 		pos = spawn,
-		size = 20,
-		velocity = 25,
+		size = 40,
+		velocity = dir * 40,
 		path = path --indicates the 2 points guard moves between, one +x one -x
 	} 
 		o.currdest = path[2]		
@@ -204,23 +237,28 @@ end
 function Guard:update(dt)
 
 	--check if at dest, if so turn
-	if self.pos == self.currdest then
+	if (self:dir() == 1 and self.pos >= self.currdest) or (self:dir() ==-1 and self.pos <= self.currdest) then
 		self.velocity = -self.velocity
+		self.currdest = self.currdest == path[2] and path[1] or path[2]
 	end
 	self.pos = self.pos + self.velocity * dt	
 end
 
 function Guard:draw()
-	love.graphics.setColor(unpack(COLOURS.GUARD))
-	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
-end
-
-function Guard:past_dest()
-
+	love.graphics.draw(IMAGES.GUARD, self.pos - self.size/2, FLOOR - self.size*1.2, 0, 0.5, 0.5, 0, 0)
 end
 
 function Guard:dir()
 	return self.velocity / math.abs(self.velocity)
+end
+
+--checks if a position is in in the Guard's current trajectory
+function Guard:in_front(pos)
+	if self:dir() == -1 then
+		return pos <= self.pos
+	elseif self:dir() == 1 then
+		return pos >= self.pos
+	end
 end
 
 Cover = {}
@@ -238,8 +276,9 @@ function Cover:new(spawn)
 end
 
 function Cover:draw()
-	love.graphics.setColor(unpack(COLOURS.COVER))
-	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
+	love.graphics.setColor(255, 255, 255)
+	--love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
+	love.graphics.draw(IMAGES.COVER, self.pos - self.size/2, FLOOR - self.size, 0, 0.6, 0.6, 0, 0)
 end
 
 
@@ -248,7 +287,7 @@ Scroll = {}
 function Scroll:new(spawn)
 	local o = {
 		pos = spawn,
-		size = 10
+		size = 50
 	}
 
 	setmetatable(o, self)
@@ -258,14 +297,15 @@ function Scroll:new(spawn)
 end	
 
 function Scroll:draw()
-	love.graphics.setColor(unpack(COLOURS.SCROLL))
-	love.graphics.rectangle("fill", self.pos - self.size, FLOOR - self.size, self.size, self.size) 
+
+	--love.graphics.rectangle("fill", self.pos - self.size, FLOOR - self.size, self.size, self.size) 
+	love.graphics.draw(IMAGES.SCROLL, self.pos - self.size, FLOOR - self.size )
 end
 
 world = {}
 
 function world:init()
-	self.leveli = 1	
+	self.leveli = 1
 
 	self:restart()
 end
@@ -275,6 +315,8 @@ function world:next_level()
 	if self.leveli < #LEVELS then
 		self.leveli = self.leveli + 1
 		self:restart()
+	else
+		
 	end
 end
 
@@ -287,11 +329,11 @@ function world:restart()
 
 	--place guards
 	for _, v in ipairs(LEVELS[self.leveli].guards) do
-		spawn = v[1] / LEVELS[self.leveli].size * SCREEN_SIZE[1]
-		path = {v[2][1] / LEVELS[self.leveli].size * SCREEN_SIZE[1], 
-				v[2][2] / LEVELS[self.leveli].size * SCREEN_SIZE[1],
+		spawn = v.spawn / LEVELS[self.leveli].size * SCREEN_SIZE[1]
+		path = {v.path[1] / LEVELS[self.leveli].size * SCREEN_SIZE[1], 
+				v.path[2] / LEVELS[self.leveli].size * SCREEN_SIZE[1],
 				}
-		table.insert(self.guards, Guard:new(spawn, path))
+		table.insert(self.guards, Guard:new(spawn, path, v.dir))
 	end
 	
 	--place cover
@@ -311,6 +353,11 @@ function world:restart()
 end
 
 function world:update(dt)
+
+	--if scrolls are all collected, advance	
+	if #self.scrolls == 0 then
+		self:next_level()
+	end
 
 	for _, v in ipairs(self.guards) do
 		v:update(dt)
