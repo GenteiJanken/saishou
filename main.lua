@@ -10,7 +10,7 @@ COVER_COLOUR = {0, 255, 0}
 SCREEN_SIZE = {800, 600}
 
 --y value all entities sit at 
-FLOOR = SCREEN_SIZE[2] / 2
+FLOOR = SCREEN_SIZE[2] /2
 
 levels = {
 
@@ -75,7 +75,11 @@ levels = {
 }
 
 function love.load()
-
+	love.graphics.setMode(unpack(SCREEN_SIZE))
+	love.graphics.setBackgroundColor(255, 255, 255)
+	love.graphics.setCaption("Saishou")
+	currlevel = levels[1]
+	player:init(currlevel.spawn)
 end
 
 
@@ -86,17 +90,27 @@ end
 
 
 function love.draw()
+	--draw floor
+	love.graphics.setColor(0, 0, 0)
+	love.graphics.setLine(10, "smooth")
+	love.graphics.line(0, FLOOR, SCREEN_SIZE[1], FLOOR)
 
 	player:draw()
 end
 
 
 function love.keypressed(key)
-
+	if key == ' ' then
+		player:toggle_move()
+	elseif key == 'escape' then
+		love.event.push("quit")
+	end
 end
 
 function love.keyreleased(key)
-
+	if key == ' ' then
+		player:toggle_move()
+	end
 end
 
 player = {}
@@ -107,11 +121,12 @@ function player:init(spawn)
 	self.pos = spawn
 	self.velocity = 0
 	self.hidden = false
+	self.size = 20
 end
 
 
 function player:draw()
-
+	love.graphics.setColor()
 	
 end
 
@@ -131,3 +146,10 @@ function player:update(dt)
 
 end
 
+function Guard:new(x)
+	o = {} --create object
+	self.x = x
+	setmetatable(o, self)
+	
+	return o
+end
