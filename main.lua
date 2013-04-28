@@ -10,7 +10,7 @@ COVER_COLOUR = {0, 255, 0}
 SCREEN_SIZE = {800, 600}
 
 --y value all entities sit at 
-FLOOR = SCREEN_SIZE[2] /2
+FLOOR = (2 * SCREEN_SIZE[2]) /3
 
 levels = {
 
@@ -62,9 +62,8 @@ levels = {
 		--pieces of cover
 		cover = {},
 
-	
 		--guards represented by
-		--initial x coordinate, alternate x coordinate (walks between these)
+		--initial x coordinate, initial direction, alternate x coordinate (walks between these)
 		guards = {},
 
 		--scrolls represented by x coordinate (static)
@@ -126,8 +125,8 @@ end
 
 
 function player:draw()
-	love.graphics.setColor()
-	
+	love.graphics.setColor(unpack(PLAYER_COLOUR))
+	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size/2, self.size, self.size) 
 end
 
 
@@ -146,10 +145,66 @@ function player:update(dt)
 
 end
 
-function Guard:new(x)
+function Guard:new(spawn, path)
 	o = {} --create object
-	self.x = x
+	self.pos = spawn
+	self.size = 20
+	self.velocity = 8
+	self.path = path --indicates the 2 points guard moves between, one +x one -x
+	self.currdest = self.path[2]
 	setmetatable(o, self)
 	
 	return o
+end
+
+
+function Guard:update(dt)
+
+	--check if at dest, if so turn
+	if self.pos == self.currdest then
+		self.velocity = -self.velocity
+	end
+	self.pos = self.pos + self.velocity * dt	
+end
+
+function Guard:draw()
+	love.graphics.setColor(unpack(GUARD_COLOUR))
+	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size/2, self.size, self.size) 
+end
+
+function Cover:new(spawn)
+	o = {}
+
+	setmetatable(o, self)
+	return o
+end
+
+
+function Scroll:new(spawn)
+	o = {}
+
+	setmetatable(o, self)
+	
+	return o
+end	
+
+
+world = {}
+
+function world:init()
+
+end
+
+function world:next_level()
+
+end
+
+function world:restart()
+
+end
+
+--Custom colour setter to handle alpha values
+
+function setColour(c, a)
+	love.graphics.setColor(c[1], c[2], c[3], a)
 end
