@@ -2,12 +2,14 @@
 	Saishou Sentou - a minimal stealth game originally intended for the LD48 Compo
 ]]--
 
-DEFAULT_COLOUR = {150, 150, 150}
-PLAYER_COLOUR = {0, 0, 0}
-ENEMY_COLOUR = {255, 0, 0}
-COVER_COLOUR = {0, 255, 0}
-SCROLL_COLOUR = {200, 160, 150}
 
+COLOURS = {
+	DEFAULT = {150, 150, 150},
+	PLAYER = {0, 0, 0},
+	ENEMY = {255, 0, 0},
+	COVER = {0, 255, 0},
+	SCROLL = {200, 160, 150}
+}
 SCREEN_SIZE = {800, 600}
 
 --y value all entities sit at 
@@ -26,7 +28,7 @@ LEVELS = {
 		cover = {90},
 
 		--guards represented by
-		--initial x coordinate, alternate x coordinate (walks between these)
+		--initial x coordinate, initial dir, alternate x coordinate (walks between these)
 		guards = {},
 		--scrolls represented by x coordinate (static)
 		scrolls = {40, 60, 80}		
@@ -44,7 +46,7 @@ LEVELS = {
 
 
 		--guards represented by
-		--initial x coordinate, alternate x coordinate (walks between these)
+		--initial x coordinate, intial dir, alternate x coordinate (walks between these)
 		guards = {{}
 		
 		},
@@ -90,7 +92,7 @@ end
 
 function love.draw()
 	--draw floor
-	love.graphics.setColor(unpack(DEFAULT_COLOUR))
+	love.graphics.setColor(unpack(COLOURS.DEFAULT))
 	love.graphics.setLine(10, "smooth")
 	love.graphics.line(0, FLOOR, SCREEN_SIZE[1], FLOOR)
 
@@ -127,7 +129,7 @@ end
 
 
 function player:draw()
-	love.graphics.setColor(unpack(PLAYER_COLOUR))
+	love.graphics.setColor(unpack(COLOURS.PLAYER))
 	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
 end
 
@@ -140,12 +142,15 @@ function player:update(dt)
 
 	--if player has no forward velocity collisions with cover, scrolls is possible
 	if self.velocity == 0  then
-		
+		--check cover
 		for _, v in ipairs(world.cover) do
-
+			if distance(self.pos, v.pos) then
+			end
 		end
-
+		--check scrolls
 		for _, v in ipairs(world.scrolls) do
+			if distance(self.pos, v.pos) then
+			end
 
 		end
 
@@ -153,19 +158,26 @@ function player:update(dt)
 	end
 
 	--check collisions with guard views (these count regardless of movement)
-
+	for _, v in ipairs(world.guards) do
+			if distance(self.pos, v.pos) then
+			end
+	end
+	
 	self.pos = (self.pos + self.velocity * dt) % SCREEN_SIZE[1]
 end
 
 Guard = {}
 
 function Guard:new(spawn, path)
-	o = {} --create object
-	self.pos = spawn
-	self.size = 20
-	self.velocity = 25
-	self.path = path --indicates the 2 points guard moves between, one +x one -x
-	self.currdest = self.path[2]
+	--create object
+	local o = {
+		pos = spawn,
+		size = 20,
+		velocity = 25,
+		path = path --indicates the 2 points guard moves between, one +x one -x
+	} 
+		o.currdest = path[2]		
+
 	setmetatable(o, self)
 	self.__index = self
 	return o
@@ -182,8 +194,16 @@ function Guard:update(dt)
 end
 
 function Guard:draw()
-	love.graphics.setColor(unpack(GUARD_COLOUR))
-	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size/2, self.size, self.size) 
+	love.graphics.setColor(unpack(COLOURS.GUARD))
+	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
+end
+
+function Guard:past_dest()
+
+end
+
+function Guard:dir()
+	return self.velocity / math.abs(self.velocity)
 end
 
 Cover = {}
@@ -201,7 +221,7 @@ function Cover:new(spawn)
 end
 
 function Cover:draw()
-	love.graphics.setColor(unpack(COVER_COLOUR))
+	love.graphics.setColor(unpack(COLOURS.COVER))
 	love.graphics.rectangle("fill", self.pos - self.size/2, FLOOR - self.size, self.size, self.size) 
 end
 
@@ -221,7 +241,7 @@ function Scroll:new(spawn)
 end	
 
 function Scroll:draw()
-	love.graphics.setColor(unpack(SCROLL_COLOUR))
+	love.graphics.setColor(unpack(COLOURS.SCROLL))
 	love.graphics.rectangle("fill", self.pos - self.size, FLOOR - self.size, self.size, self.size) 
 end
 
