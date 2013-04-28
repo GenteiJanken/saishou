@@ -47,7 +47,12 @@ LEVELS = {
 
 		--guards represented by
 		--initial x coordinate, intial dir, alternate x coordinate (walks between these)
-		guards = {{}
+		guards = {
+					{
+						spawn =	35,
+						dir = 1,
+						path = {35, 70}
+					}
 		
 		},
 
@@ -63,11 +68,23 @@ LEVELS = {
 		spawn = 10, 
 		
 		--pieces of cover
-		cover = {40, 60},
+		cover = {40, 60, 80},
 
 		--guards represented by
 		--initial x coordinate, initial direction, alternate x coordinate (walks between these)
-		guards = {{}, {}},
+		guards = {
+					{
+						spawn =	35,
+						dir = 1,
+						path = {35, 70}
+					},
+					{
+						spawn =	70,
+						dir = -1,
+						path = {70, 35}
+					}
+ 
+		},
 
 		--scrolls represented by x coordinate (static)
 		scrolls = {80}
@@ -135,7 +152,7 @@ end
 
 
 function player:toggle_move()
-	self.velocity = self.velocity == 0 and 30 or 0
+	self.velocity = self.velocity == 0 and 50 or 0
 end
 
 function player:update(dt)
