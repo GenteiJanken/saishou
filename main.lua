@@ -30,6 +30,9 @@ SOUNDS = {
 	FAILURE = love.audio.newSource("zannen.wav")
 }
 
+GAME_OVER = false
+
+
 --y value all entities sit at 
 FLOOR = (2 * SCREEN_SIZE[2]) / 3
 
@@ -113,6 +116,7 @@ function love.load()
 	love.graphics.setMode(unpack(SCREEN_SIZE))
 	love.graphics.setBackgroundColor(255, 255, 255)
 	love.graphics.setCaption("Saishou")
+	GAME_OVER = false
 	world:init()
 	
 	SOUNDS.BGM:setLooping(true)
@@ -121,10 +125,10 @@ end
 
 
 function love.update(dt)
-
-	world:update(dt)
-	player:update(dt)
-
+	if GAME_OVER == false then
+		world:update(dt)
+		player:update(dt)
+	end
 end
 
 
@@ -145,6 +149,10 @@ end
 
 
 function love.keypressed(key)
+	if GAME_OVER then
+		love.load()
+	end
+
 	if key == ' ' then
 		player.velocity = 50
 	elseif key == 'escape' then
@@ -327,6 +335,7 @@ function world:next_level()
 		self:restart()
 	else
 		SOUNDS.GAME_CLEAR:play()
+		GAME_OVER = true
 		love.audio.stop(SOUNDS.BGM)
 	end
 end
